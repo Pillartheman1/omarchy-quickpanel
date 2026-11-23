@@ -22,6 +22,8 @@ Item {
 
   property var pins: []
   property bool forceOpen: false
+  property real cursorX: -1
+  property real cursorY: -1
 
   property alias strings: stringsCatalog
 
@@ -145,6 +147,16 @@ Item {
     function open(): void { root.open("{}") }
     function close(): void { root.close() }
     function toggle(): void { root.toggle() }
+  }
+
+  // One Hyprland cursor poll for every screen window.
+  CursorEdge {
+    id: cursorEdge
+    active: true
+    onMoved: function(x, y) {
+      root.cursorX = x
+      root.cursorY = y
+    }
   }
 
   Variants {
