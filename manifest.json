@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "daniel.quickpanel",
+  "name": "Quickpanel",
+  "version": "0.1.0",
+  "author": "Daniel Klabunde",
+  "license": "MIT",
+  "homepage": "https://github.com/Pillartheman1/omarchy-quickpanel",
+  "description": "Right-edge hot strip that slides out a quick panel with pinned apps.",
+  "kinds": ["service"],
+  "keywords": ["quickpanel", "sidebar", "hot-edge", "apps", "panel"],
+  "entryPoints": {
+    "service": "Service.qml"
+  }
+}

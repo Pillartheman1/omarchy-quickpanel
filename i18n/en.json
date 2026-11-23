@@ -1,0 +1,14 @@
+{
+  "title": "Quickpanel",
+  "apps": "Apps",
+  "empty": "No pinned apps yet",
+  "emptyHint": "Open Add apps to pin launchers here",
+  "addApps": "Add apps",
+  "doneAdding": "Done",
+  "searchApps": "Search apps",
+  "pin": "Pin",
+  "unpin": "Unpin",
+  "launch": "Launch",
+  "moreLater": "More widgets later",
+  "noMatches": "No matching apps"
+}
