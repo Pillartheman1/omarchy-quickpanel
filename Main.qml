@@ -11,7 +11,8 @@ Item {
   property var shell: null
   property var manifest: null
 
-  readonly property var appLibrary: shell ? shell.appLibrary : null
+  // Overlay plugins do not receive shell.appLibrary (menu kinds only), so
+  // apps are resolved through DesktopEntries and launched with gtk-launch.
   readonly property string configPath: {
     var configHome = Quickshell.env("XDG_CONFIG_HOME")
     if (!configHome || configHome === "")
@@ -61,28 +62,45 @@ Item {
   function iconFor(desktopId) {
     var entry = root.entryFor(desktopId)
     var icon = entry && entry.icon ? entry.icon : String(desktopId || "")
-    if (root.appLibrary && typeof root.appLibrary.iconSource === "function")
-      return root.appLibrary.iconSource(icon)
     return Quickshell.iconPath(icon, true)
   }
 
   function nameFor(desktopId) {
     var entry = root.entryFor(desktopId)
     if (entry && entry.name) return String(entry.name)
-    if (root.appLibrary && typeof root.appLibrary.entryName === "function" && entry)
-      return String(root.appLibrary.entryName(entry) || desktopId)
     return String(desktopId || "")
+  }
+
+  function searchApps(query) {
+    var q = String(query || "").trim().toLowerCase()
+    var values = DesktopEntries.applications.values
+    var out = []
+    for (var i = 0; i < values.length && out.length < 48; i++) {
+      var entry = values[i]
+      if (!entry || entry.noDisplay) continue
+      var name = String(entry.name || "")
+      var id = String(entry.id || "")
+      if (q && name.toLowerCase().indexOf(q) < 0 && id.toLowerCase().indexOf(q) < 0)
+        continue
+      out.push(entry)
+    }
+    out.sort(function(a, b) {
+      return String(a.name || "").localeCompare(String(b.name || ""))
+    })
+    return out
   }
 
   function launchApp(desktopId) {
     var entry = root.entryFor(desktopId)
     if (!entry) return
-    if (root.appLibrary && typeof root.appLibrary.launch === "function")
-      root.appLibrary.launch(entry.id, entry.name)
+    var id = String(entry.id || desktopId || "")
+    if (!id) return
+    // Match AppLibrary: scope gtk-launch under the graphical app slice.
+    Util.execDetached("uwsm-app -- gtk-launch " + Util.shellQuote(id + ".desktop"))
     root.close()
   }
 
-  function open() {
+  function open(payloadJson) {
     root.forceOpen = true
   }
 
@@ -97,7 +115,7 @@ Item {
 
   function toggle() {
     if (root.forceOpen || root.anyRevealed()) root.close()
-    else root.open()
+    else root.open("{}")
   }
 
   function anyRevealed() {
@@ -107,6 +125,9 @@ Item {
     }
     return false
   }
+
+  // keepLoaded overlays stay mounted; open() is also used by shell summon.
+  Component.onCompleted: root.close()
 
   FileView {
     id: configFile
@@ -121,7 +142,7 @@ Item {
 
   ShellIpc {
     target: "daniel.quickpanel"
-    function open(): void { root.open() }
+    function open(): void { root.open("{}") }
     function close(): void { root.close() }
     function toggle(): void { root.toggle() }
   }

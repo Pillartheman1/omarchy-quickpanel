@@ -22,9 +22,7 @@ PanelWindow {
     if (!ipc || ipc.length < 4) return [0, Style.bar.sizeHorizontal, 0, 0]
     return [ipc[0] || 0, ipc[1] || 0, ipc[2] || 0, ipc[3] || 0]
   }
-  // Clear the top bar / control strip so the hot edge never sits under it.
   readonly property int topInset: Math.max(reserved[1], Style.bar.sizeHorizontal) + Style.spacing.xs
-
   readonly property int panelWidth: Style.space(340)
   readonly property int edgeDepth: Style.space(4) + Style.spacing.hairline
   readonly property int outerGap: Style.gapsOut
@@ -55,7 +53,7 @@ PanelWindow {
     hideTimer.restart()
   }
 
-  visible: true
+  visible: !remapGuard.remapping
   color: "transparent"
   exclusionMode: ExclusionMode.Ignore
   exclusiveZone: 0
@@ -63,18 +61,13 @@ PanelWindow {
   WlrLayershell.layer: WlrLayer.Top
   WlrLayershell.keyboardFocus: window.contentShown ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
-  anchors {
-    top: true
-    bottom: true
-    right: true
-  }
-
+  anchors { top: true; bottom: true; right: true }
   implicitWidth: window.panelWidth + window.outerGap + window.edgeDepth
   implicitHeight: 0
 
   mask: Region {
-    item: window.contentShown ? panelCard : null
-    Region { item: edgeTrigger }
+    item: edgeTrigger
+    Region { item: window.contentShown ? slideHost : null }
   }
 
   Timer {
@@ -97,13 +90,14 @@ PanelWindow {
   onPinnedOpenChanged: {
     if (window.pinnedOpen) {
       window.reveal()
-      Qt.callLater(function() { if (window.pinnedOpen) keyScope.forceActiveFocus() })
+      Qt.callLater(function() {
+        if (window.pinnedOpen) keyScope.forceActiveFocus()
+      })
     } else if (!window.hoverKeep) {
       window.requestHide()
     }
   }
 
-  // Hot edge: right strip starting below the top bar.
   Item {
     id: edgeTrigger
     anchors.right: parent.right
@@ -111,6 +105,7 @@ PanelWindow {
     anchors.top: parent.top
     anchors.topMargin: window.topInset
     width: window.edgeDepth
+    z: 2
 
     HoverHandler {
       id: edgeHover
@@ -128,119 +123,115 @@ PanelWindow {
       }
     }
 
-    // Subtle teaching cue while the dwell is counting.
     Rectangle {
       anchors.fill: parent
       color: Color.accent
-      opacity: window.dwellArmed && !window.contentShown ? 0.55 : 0
+      opacity: window.contentShown ? 0.85 : (window.dwellArmed ? 0.65 : 0.4)
       Behavior on opacity {
         NumberAnimation { duration: Style.duration(120); easing.type: Easing.OutCubic }
       }
     }
   }
 
-  BorderSurface {
-    id: panelCard
-    width: window.panelWidth
-    anchors.top: parent.top
-    anchors.bottom: parent.bottom
-    anchors.topMargin: window.topInset
-    anchors.bottomMargin: window.outerGap
+  Item {
+    id: slideHost
     anchors.right: parent.right
-    anchors.rightMargin: window.outerGap - tuck
+    anchors.rightMargin: window.edgeDepth
+    anchors.top: parent.top
+    anchors.topMargin: window.topInset
+    anchors.bottom: parent.bottom
+    anchors.bottomMargin: window.outerGap
+    width: window.panelWidth + window.outerGap
+    clip: true
+    z: 1
 
-    property real tuck: window.contentShown ? 0 : window.panelWidth + window.outerGap
+    BorderSurface {
+      id: panelCard
+      width: window.panelWidth
+      height: parent.height
+      x: window.contentShown ? 0 : width
+      radius: Style.cornerRadius
+      // Prefer an opaque enough fill so icons read on light wallpapers.
+      color: Util.alpha(Color.popups.background, 0.96)
+      borderSpec: Border.surfaceSpec("popups", "border", Color.popups.border, Math.max(1, Style.space(2)))
+      padding: Style.spacing.panelPadding
 
-    Behavior on tuck {
-      id: tuckMotion
-      NumberAnimation {
-        duration: Style.duration(tuckMotion.targetValue > 0 ? 120 : 180)
-        easing.type: Easing.OutCubic
-      }
-    }
-
-    opacity: window.contentShown || tuck < window.panelWidth ? 1 : 0
-    radius: Style.cornerRadius
-    color: Color.popups.background
-    borderSpec: Border.surfaceSpec("popups", "border", Color.popups.border, Math.max(1, Style.space(2)))
-    padding: Style.spacing.panelPadding
-
-    HoverHandler {
-      id: panelHover
-      onHoveredChanged: {
-        if (hovered) hideTimer.stop()
-        else window.requestHide()
-      }
-    }
-
-    FocusScope {
-      id: keyScope
-      anchors.fill: parent
-      anchors.margins: panelCard.padding
-      focus: window.contentShown
-
-      Keys.onPressed: function(event) {
-        if (event.key === Qt.Key_Escape) {
-          if (service) service.close()
-          else window.dismiss()
-          event.accepted = true
+      Behavior on x {
+        id: slideMotion
+        NumberAnimation {
+          duration: Style.duration(slideMotion.targetValue > 0 ? 120 : 180)
+          easing.type: Easing.OutCubic
         }
       }
 
-      Column {
-        id: body
+      HoverHandler {
+        id: panelHover
+        onHoveredChanged: {
+          if (hovered) hideTimer.stop()
+          else window.requestHide()
+        }
+      }
+
+      FocusScope {
+        id: keyScope
         anchors.fill: parent
-        spacing: Style.spacing.md
+        anchors.margins: panelCard.padding
+        focus: window.contentShown
 
-        Row {
-          width: parent.width
-          spacing: Style.spacing.sm
-
-          Text {
-            textFormat: Text.PlainText
-            text: service && service.strings ? service.strings.t("title") : "Quickpanel"
-            color: Color.popups.text
-            font.family: Style.font.family
-            font.pixelSize: Style.font.title
-            font.bold: true
-            elide: Text.ElideRight
-            width: parent.width - addButton.width - parent.spacing
-            anchors.verticalCenter: parent.verticalCenter
-          }
-
-          Button {
-            id: addButton
-            bordered: true
-            foreground: Color.popups.text
-            text: {
-              if (!service || !service.strings) return appGrid.adding ? "Done" : "Add apps"
-              return appGrid.adding ? service.strings.t("doneAdding") : service.strings.t("addApps")
-            }
-            onClicked: appGrid.adding = !appGrid.adding
+        Keys.onPressed: function(event) {
+          if (event.key === Qt.Key_Escape) {
+            if (service) service.close()
+            else window.dismiss()
+            event.accepted = true
           }
         }
 
-        AppGrid {
-          id: appGrid
-          width: parent.width
-          height: Math.max(0, parent.height - y)
-          service: window.service
-          visibleContent: window.contentShown
+        Column {
+          anchors.fill: parent
+          spacing: Style.spacing.md
+
+          Row {
+            width: parent.width
+            spacing: Style.spacing.sm
+
+            Text {
+              textFormat: Text.PlainText
+              text: service && service.strings ? service.strings.t("title") : "Quickpanel"
+              color: Color.popups.text
+              font.family: Style.font.family
+              font.pixelSize: Style.font.title
+              font.bold: true
+              elide: Text.ElideRight
+              width: parent.width - addButton.width - parent.spacing
+              anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Button {
+              id: addButton
+              bordered: true
+              foreground: Color.popups.text
+              text: {
+                if (!service || !service.strings) return appGrid.adding ? "Done" : "Add apps"
+                return appGrid.adding ? service.strings.t("doneAdding") : service.strings.t("addApps")
+              }
+              onClicked: appGrid.adding = !appGrid.adding
+            }
+          }
+
+          AppGrid {
+            id: appGrid
+            width: parent.width
+            height: Math.max(0, parent.height - y)
+            service: window.service
+            visibleContent: window.contentShown
+          }
         }
       }
-    }
-  }
-
-  HyprlandFocusGrab {
-    active: window.pinnedOpen && window.contentShown
-    windows: [window]
-    onCleared: {
-      if (service) service.close()
-      else window.dismiss()
     }
   }
 
   ScreenMoveRemap {
+    id: remapGuard
     window: window
   }
 }

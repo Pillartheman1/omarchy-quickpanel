@@ -19,17 +19,8 @@ Item {
 
   readonly property var pins: service ? service.pins : []
   readonly property var searchResults: {
-    if (!root.adding || !service || !service.appLibrary) return []
-    if (typeof service.appLibrary.sortedEntries !== "function") return []
-    var entries = service.appLibrary.sortedEntries(root.filterText) || []
-    var out = []
-    var limit = 48
-    for (var i = 0; i < entries.length && out.length < limit; i++) {
-      var entry = entries[i]
-      if (!entry || entry.noDisplay) continue
-      out.push(entry)
-    }
-    return out
+    if (!root.adding || !service || typeof service.searchApps !== "function") return []
+    return service.searchApps(root.filterText) || []
   }
 
   onVisibleContentChanged: {
@@ -258,19 +249,9 @@ Item {
             color: rowMouse.containsMouse ? Util.alpha(Color.accent, 0.16) : "transparent"
 
             readonly property string desktopId: modelData && modelData.id ? String(modelData.id) : ""
-            readonly property string appName: {
-              if (!modelData) return ""
-              if (service && service.appLibrary && typeof service.appLibrary.entryName === "function")
-                return String(service.appLibrary.entryName(modelData) || modelData.name || desktopId)
-              return String(modelData.name || desktopId)
-            }
+            readonly property string appName: modelData && modelData.name ? String(modelData.name) : desktopId
             readonly property bool pinned: service ? service.isPinned(desktopId) : false
-            readonly property string iconSource: {
-              if (!service) return ""
-              if (modelData && modelData.icon && service.appLibrary && typeof service.appLibrary.iconSource === "function")
-                return service.appLibrary.iconSource(modelData.icon)
-              return service.iconFor(desktopId)
-            }
+            readonly property string iconSource: service ? service.iconFor(desktopId) : ""
 
             Row {
               anchors.fill: parent

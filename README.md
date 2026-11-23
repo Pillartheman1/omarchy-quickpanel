@@ -16,7 +16,7 @@ Or for local development:
 ln -sfn ~/Projects/omarchy-quickpanel ~/.config/omarchy/plugins/daniel.quickpanel
 omarchy plugin validate ~/.config/omarchy/plugins/daniel.quickpanel
 omarchy plugin enable daniel.quickpanel
-omarchy-shell shell rescanPlugins
+omarchy restart shell
 ```
 
 Add a keybind in `~/.config/hypr/bindings.lua`:
@@ -26,6 +26,8 @@ o.bind("SUPER + SHIFT + Z", "Quickpanel", "omarchy-shell daniel.quickpanel toggl
 ```
 
 Then `hyprctl reload` and check `hyprctl configerrors`.
+
+This is a `keepLoaded` overlay (not a bar widget). The hot edge stays mapped; pinned apps are resolved with DesktopEntries and launched via `gtk-launch`.
 
 ## Use
 

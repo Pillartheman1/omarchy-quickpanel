@@ -7,9 +7,10 @@
   "license": "MIT",
   "homepage": "https://github.com/Pillartheman1/omarchy-quickpanel",
   "description": "Right-edge hot strip that slides out a quick panel with pinned apps.",
-  "kinds": ["service"],
+  "kinds": ["overlay"],
+  "keepLoaded": true,
   "keywords": ["quickpanel", "sidebar", "hot-edge", "apps", "panel"],
   "entryPoints": {
-    "service": "Service.qml"
+    "overlay": "Main.qml"
   }
 }
