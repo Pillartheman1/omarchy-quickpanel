@@ -13,7 +13,7 @@ description: >
 Plugin tree: `~/Projects/omarchy-quickpanel`  
 Runtime symlink: `~/.config/omarchy/plugins/daniel.quickpanel`  
 Config: `~/.config/omarchy/extensions/daniel.quickpanel.json`  
-Open: **Super+Shift+Z** or right-edge dwell (~200ms) on the globally rightmost output.  
+Open: **Super+Shift+Z** (user keybind) or edge dwell (~200ms) on the configured edge (right/bottom → rightmost output, left → leftmost).  
 Reload: shell often hot-reloads plugin saves; use `omarchy restart shell` if a `keepLoaded` overlay stays on an old tree.
 
 ## Panel anatomy
@@ -27,7 +27,7 @@ Side edges (left/right), top → bottom inside the card:
 
 Bottom edge is a **horizontal strip**: controls | apps + Add apps/Edit under the grid (side by side) | widgets. Controls and apps+buttons columns share the same top/bottom (`pairedH`). `WidgetGrid` lays widgets in a sideways `Row` (`horizontal: true`) and pans with `HorizontalFlick` (trackpad/wheel vertical deltas map to `contentX`).
 
-**Edit mode:** drag widgets/apps to rearrange; ✕ deletes. Long-press drag is disabled outside edit mode. Placement buttons set `draftEdge` (`left` / `right` / `bottom`); **Done** commits `edge` to config. **Undo** restores the edit-entry snapshot. Escape / close cancels the edit.
+**Edit mode:** drag widgets/apps to rearrange; ✕ deletes. Drag only works in Edit mode (no long-press; it starts after a few pixels of movement). Side edges: widget drop = `placeWidget` (place on empty, swap on occupied). Bottom: widget drop = `moveWidget` list reorder by visual index (never `placeWidget` on the packed Row, it clones cards). Placement buttons set `draftEdge` (`left` / `right` / `bottom`); **Done** commits `edge` to config. **Undo** restores the edit-entry snapshot. Escape / close cancels the edit and reverts.
 
 Do not hardcode widgets in `QuickpanelWindow.qml`. Placement belongs to `WidgetGrid`.
 
@@ -65,7 +65,7 @@ Do not hardcode widgets in `QuickpanelWindow.qml`. Placement belongs to `WidgetG
 | `span` | Slots occupied along that axis (`defaultSpanFor`) — rows on side edges, width units on bottom |
 | `edge` | `right`, `left`, or `bottom` — dwell edge and slide direction |
 
-Empty slots are valid drop targets. In **edit mode**, drag → drop on empty **places**; drop on occupied **swaps**. The grid **scrolls** when widgets exceed the viewport (`emptyTail` keeps spare drop slots).
+Empty slots are valid drop targets. In **edit mode** on side edges, drag → drop on empty **places**; drop on occupied **swaps**. On the bottom strip widgets are a packed list: drop on a card moves the dragged card to that position, drop on the trailing spare moves it last, and slots are repacked from 0. The grid **scrolls** when widgets exceed the viewport (`emptyTail` keeps spare drop slots).
 
 Legacy pins-only configs are seeded once with `defaultWidgets()` on load.
 
@@ -150,7 +150,8 @@ Do not re-implement full network/bluetooth/audio panels here — those stay in t
 |------|--------|
 | `addWidget(id, span?, slot?)` | Append (span defaults via `defaultSpanFor`) |
 | `removeWidget(id)` | Remove from config |
-| `placeWidget(id, slot, persist?)` | Move/swap; `persist: false` while dragging |
+| `placeWidget(id, slot, persist?)` | Side edges: place/swap at a slot; `persist: false` while dragging |
+| `moveWidget(fromIndex, toIndex, persist?)` | Bottom strip: list reorder by visual index, repacks slots |
 | `saveWidgets(list)` | Replace list and write config |
 | `saveConfig()` | Write pins + widgets |
 

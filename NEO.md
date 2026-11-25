@@ -91,7 +91,7 @@ Not blockers; pick when asked to continue:
 
 - ~~Add-apps on bottom: expand hug height so search is not squeezed into the short paired band.~~ Done (PR #1, merged): `AppGrid.compactBodyHeight` (pin rows, or search + 4 result rows while adding) feeds `bottomPairedNaturalH` / `appsStackNaturalH`. Verified on-device by Daniel.
 - ~~Comment trim: shorten changelog-style notes in WidgetGrid / QuickpanelWindow to short WHY constraints.~~ Done (`chore/comment-trim`): comments only, hard-rule warnings kept.
-- README drag copy: confirm side place/swap vs bottom packed reorder wording stays accurate after merges.
+- ~~README drag copy: confirm side place/swap vs bottom packed reorder wording stays accurate after merges.~~ Done (`docs/readme-drag-wording`): README, widgets/README, and the skill now match the code (no long-press; side place/swap; bottom moveWidget reorder).
 - Manifest / git tag: bump when shipping a named release beyond 0.2.0.
 - CursorEdge far/near tuning only if dwell feels laggy after the 220ms far interval.
 

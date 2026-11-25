@@ -1,7 +1,9 @@
 # Quickpanel widgets
 
 Drop custom QML widgets here. They appear in the slot grid (vertical on side
-edges, horizontal strip on bottom). Edit mode: drag to place or swap.
+edges, horizontal strip on bottom). In Edit mode, drag to rearrange: side edges
+place on an empty slot or swap with another widget; the bottom strip reorders as
+a packed list.
 
 Every widget must work in **both** orientations and fill the cell — on bottom,
 all cards share the same strip height. Details and the root sizing contract are
