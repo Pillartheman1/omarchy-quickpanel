@@ -89,7 +89,7 @@ i18n/en.json             Strings
 
 Not blockers; pick when asked to continue:
 
-- ~~Add-apps on bottom: expand hug height so search is not squeezed into the short paired band.~~ **Done on PR #1** (`fix/add-apps-bottom-hug-height`, commit `35cffe2`): `AppGrid.compactBodyHeight` (pin rows, or search + 4 result rows while adding) feeds `bottomPairedNaturalH` / `appsStackNaturalH`. Merge when verified on-device.
+- ~~Add-apps on bottom: expand hug height so search is not squeezed into the short paired band.~~ Done (PR #1, merged): `AppGrid.compactBodyHeight` (pin rows, or search + 4 result rows while adding) feeds `bottomPairedNaturalH` / `appsStackNaturalH`. Verified on-device by Daniel.
 - Comment trim: shorten changelog-style notes in WidgetGrid / QuickpanelWindow to short WHY constraints.
 - README drag copy: confirm side place/swap vs bottom packed reorder wording stays accurate after merges.
 - Manifest / git tag: bump when shipping a named release beyond 0.2.0.

@@ -29,11 +29,12 @@ PanelWindow {
   readonly property int panelWidth: Style.space(340)
   // Side edges: fixed tall card. Bottom: hug the controls/apps paired height
   // so widgets shrink with the strip and no dead band sits above/below.
+  // Add apps swaps the pin-rows term for compactBodyHeight so search fits.
   readonly property int bottomChromeBtnH: Style.space(32)
   readonly property int bottomPairedNaturalH: {
     var ctrlH = controlsStrip ? controlsStrip.naturalHeight : 0
     var appsH = appGrid
-      ? (appGrid.compactGridHeight + Style.spacing.xs + window.bottomChromeBtnH)
+      ? (appGrid.compactBodyHeight + Style.spacing.xs + window.bottomChromeBtnH)
       : 0
     return Math.max(ctrlH, appsH, Style.space(120))
   }
@@ -500,7 +501,7 @@ PanelWindow {
           // Paired columns fill the body (panel already hugs this height).
           readonly property int chromeBtnH: window.bottomChromeBtnH
           readonly property int appsStackNaturalH: window.isBottom
-            ? (appGrid.compactGridHeight + Style.spacing.xs + body.chromeBtnH)
+            ? (appGrid.compactBodyHeight + Style.spacing.xs + body.chromeBtnH)
             : 0
           readonly property int pairedH: window.isBottom
             ? Math.max(controlsStrip.naturalHeight, body.appsStackNaturalH)
