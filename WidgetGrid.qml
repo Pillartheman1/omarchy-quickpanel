@@ -17,9 +17,8 @@ Item {
   readonly property int columns: 1
   readonly property int minSlotHeight: Style.space(96)
   readonly property int minSlotWidth: Style.space(200)
-  // Bottom strip: tight fixed strides so cards pack side-by-side. Do not
-  // derive width from strip height — that left huge inter-widget voids.
-  // Wireframe cards are roomy; keep span-1 readable and span-2 for clock/SPCX.
+  // Bottom strip: fixed strides so cards pack. Never derive width from strip
+  // height (it opens big gaps between cards).
   readonly property int minSlotWidthHorizontal: Style.space(130)
   readonly property int maxSlotWidthHorizontal: Style.space(168)
   readonly property int slotGap: Style.spacing.xs
@@ -42,8 +41,8 @@ Item {
 
   readonly property var widgets: service ? service.widgets : []
 
-  // Bottom strip: sorted widget list for the packed Row (on root so the
-  // Repeater can see it — a Flickable-local copy left the model empty).
+  // Sorted list for the bottom packed Row. Lives on root: a Flickable-local
+  // copy is invisible to the Repeater (empty model).
   readonly property var horizontalWidgets: {
     if (!root.horizontal) return []
     var list = root.widgets || []
@@ -82,8 +81,7 @@ Item {
   }
 
   readonly property int viewportSlots: {
-    // Only pad the vertical column to the viewport. Horizontal mode sizes to
-    // content so we do not invent a row of empty wide cards.
+    // Only the vertical column pads to the viewport; horizontal sizes to content.
     if (root.horizontal) return 1
     var stride = root.slotStride + root.slotGap
     if (stride <= 0) return 1
@@ -93,8 +91,7 @@ Item {
 
   readonly property int slotCount: {
     var tail = root.horizontal ? root.emptyTailHorizontal : root.emptyTail
-    // Outside edit mode on the bottom strip, only keep occupied slots so the
-    // Row packs widgets tightly.
+    // Bottom outside edit: occupied slots only, so the Row packs tightly.
     if (root.horizontal && !root.editMode)
       return Math.max(root.occupiedEnd, 1)
     return Math.max(
@@ -110,8 +107,8 @@ Item {
     return n * root.slotStride + Math.max(0, n - 1) * root.slotGap
   }
 
-  // Slot indices to render (skip span-continuation cells). Used by the
-  // horizontal Row so spacing is not applied to zero-width placeholders.
+  // Start slots only (no span-continuation cells), so spacing never lands on
+  // zero-width placeholders.
   property var displaySlots: []
 
   function rebuildDisplaySlots() {
@@ -145,7 +142,7 @@ Item {
       var start = Math.max(0, Math.round(Number(w.slot) || 0))
       var span = Math.max(1, Math.round(Number(w.span) || 1))
       for (var s = 0; s < span; s++) {
-        // String keys — QVariantMap lookups with int can miss after edge switches.
+        // String keys: int QVariantMap lookups can miss after edge switches.
         map[String(start + s)] = {
           id: String(w.id),
           span: span,
@@ -167,9 +164,9 @@ Item {
     }
   }
 
-  // Bottom: returns visual index into horizontalWidgets (list.length = trailing
-  // spare). Side: returns grid slot index. Packed Row has no hole cells, so
-  // slot-based hit-testing cannot be used on the bottom strip.
+  // Bottom: visual index into horizontalWidgets (length = trailing spare).
+  // Side: grid slot index. The packed Row has no holes, so the bottom strip
+  // cannot hit-test by slot.
   function slotAt(posInContent) {
     if (root.horizontal) {
       var list = root.horizontalWidgets || []
@@ -203,8 +200,8 @@ Item {
     return root.occupancy[String(slot)] || root.occupancy[slot] || null
   }
 
-  // Vertical Loader height from occupancy — do not wait on item.slotIndex /
-  // item.height or span-2 cards overlap the next slot.
+  // Height from occupancy, not item.slotIndex/item.height, or span-2 cards
+  // overlap the next slot.
   function slotHeightAt(slot) {
     var occ = root.occupancyAt(slot)
     if (!occ) return root.slotStride
@@ -282,9 +279,9 @@ Item {
     root.dragHeight = 0
     if (!id || target < 0) return
 
-    // Bottom strip is a packed list — reorder by visual index, then repack.
-    // Slot-based placeWidget swaps left holes that the Row does not render,
-    // so the spare Loader and cards fought over the same occupancy (clones).
+    // Bottom = packed list: reorder by visual index via moveWidget. Never use
+    // slot-based placeWidget here; its holes are not rendered by the Row, so
+    // the spare Loader and cards share occupancy and clone.
     if (root.horizontal) {
       var list = root.horizontalWidgets || []
       var fromIdx = -1
@@ -334,8 +331,7 @@ Item {
       id: cell
 
       property int slotIndex: 0
-      // Packed Row visual index; list.length marks the trailing spare. Side
-      // edges leave this at -1 and use slotIndex for drop highlighting.
+      // Bottom visual index (list.length = trailing spare). Side: -1, uses slotIndex.
       property int visualIndex: -1
       property bool layHorizontal: false
 
@@ -360,13 +356,12 @@ Item {
         return root.slotStride
       }
 
-      // Keep visibility on the cell itself — do not overwrite from Loader.onLoaded
-      // (that fought Loader.visible: item.visible and blanked the side grid).
+      // Visibility lives on the cell. Setting it from Loader.onLoaded fights
+      // Loader.visible and blanks the side grid.
       visible: layHorizontal || isStart || isEmpty
 
-      // Bottom (horizontal): size from span. Side (vertical): fill the parent
-      // Loader, whose height comes from slotHeightAt(index) — avoids span-2
-      // cards painting over the next slot when cell spanSize races slotIndex.
+      // Bottom: size from span. Side: fill the Loader (height from
+      // slotHeightAt) so span-2 cards cannot paint over the next slot.
       width: layHorizontal
         ? spanSize
         : (parent && parent.width > 0 ? parent.width : (flick ? flick.width : spanSize))
@@ -402,8 +397,8 @@ Item {
           if (!item) return
           if ("service" in item) item.service = root.service
           if ("active" in item) item.active = root.visibleContent
-          // SystemGauges stacks from service.activeEdge; no horizontal inject
-          // here — Binding horizontal onto every card blanked the side grid.
+          // Do not inject `horizontal` into cards (blanks the side grid);
+          // SystemGauges reads service.activeEdge instead.
         }
 
         Binding {
@@ -574,8 +569,8 @@ Item {
       if (!root.horizontal && contentX !== 0) contentX = 0
     }
 
-    // Bottom edge: pack widget cards only (plus one empty drop target while
-    // editing). Width comes from span × tight stride — never from viewport.
+    // Bottom: packed cards (+ one spare drop target while editing). Width =
+    // span × stride, never the viewport.
     Row {
       id: hRow
       visible: root.horizontal
@@ -619,9 +614,8 @@ Item {
         }
       }
 
-      // Single spare drop slot at the end while editing. Never bind slotIndex
-      // without a model guard — a missing modelData falling through to 0 made
-      // every recycling cell load the widget at slot 0 (clone/replace).
+      // Trailing spare drop slot while editing. Always guard slotIndex on the
+      // model: falling through to 0 loads slot 0's widget in every cell (clones).
       Loader {
         id: spareDropLoader
         active: root.horizontal && root.editMode
@@ -652,9 +646,8 @@ Item {
       }
     }
 
-    // Side edges: packed column of start slots (+ empty drop targets).
-    // A Column avoids absolute-y + continuation-slot races that stacked cards
-    // on top of each other after bottom→right edge switches.
+    // Side: Column of start slots (+ empty drop targets). Absolute y raced
+    // continuation slots and stacked cards after edge switches.
     Column {
       id: vCol
       visible: !root.horizontal

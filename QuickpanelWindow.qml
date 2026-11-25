@@ -22,14 +22,12 @@ PanelWindow {
     return [ipc[0] || 0, ipc[1] || 0, ipc[2] || 0, ipc[3] || 0]
   }
   readonly property int topInset: Math.max(reserved[1], Style.bar.sizeHorizontal) + Style.spacing.xs
-  // Hyprland reserved bottom (dock often leaves this 0 while still covering the
-  // edge — cursor dwell uses a taller band; the window still anchors to the
-  // output bottom and paints above the dock in Overlay z-order).
+  // Reserved bottom is often 0 even with a dock, hence the taller dwell band.
+  // The window anchors to the output bottom and paints above the dock (Overlay).
   readonly property int bottomInset: Math.max(Number(reserved[3]) || 0, 0)
   readonly property int panelWidth: Style.space(340)
-  // Side edges: fixed tall card. Bottom: hug the controls/apps paired height
-  // so widgets shrink with the strip and no dead band sits above/below.
-  // Add apps swaps the pin-rows term for compactBodyHeight so search fits.
+  // Side: fixed tall card. Bottom: hug the controls/apps paired height (no dead
+  // band); compactBodyHeight grows it while Add apps is open.
   readonly property int bottomChromeBtnH: Style.space(32)
   readonly property int bottomPairedNaturalH: {
     var ctrlH = controlsStrip ? controlsStrip.naturalHeight : 0
@@ -186,8 +184,8 @@ PanelWindow {
   exclusiveZone: 0
   WlrLayershell.namespace: "omarchy-quickpanel"
   WlrLayershell.layer: WlrLayer.Overlay
-  // Exclusive focus on open remaps the layer and was blanking the panel.
-  // Take seat only after the pointer has entered the open card.
+  // Exclusive focus on the open tick remaps the layer and blanks the panel;
+  // take focus only after the pointer enters the open card.
   WlrLayershell.keyboardFocus: (window.contentShown && window.pointerEnteredWhileOpen)
     ? WlrKeyboardFocus.Exclusive
     : WlrKeyboardFocus.None
@@ -320,8 +318,8 @@ PanelWindow {
       // Explicit geometry only — no anchors on the slide axis.
       width: window.isBottom ? parent.width : window.panelWidth
       height: window.isBottom ? Math.min(window.panelHeight, parent.height) : parent.height
-      // Open/closed slide targets. Require a laid-out parent before computing
-      // closedY so we never park the card below a 0-height clip.
+      // Slide targets. Wait for a laid-out parent so closedY never parks the
+      // card below a 0-height clip.
       readonly property bool slideReady: parent && parent.height > 0 && width > 0 && height > 0
       readonly property real openX: window.isLeft ? 0 : Math.max(0, parent.width - width)
       readonly property real closedX: window.isLeft
@@ -353,7 +351,7 @@ PanelWindow {
           easing.type: Easing.OutCubic
         }
       }
-      // Bottom: no Behavior on y — it froze the first closedY below the clip.
+      // Bottom: no Behavior on y (it freezes the first closedY below the clip).
 
       HoverHandler {
         id: panelHover
@@ -522,8 +520,7 @@ PanelWindow {
               service: window.service
               visibleContent: window.contentShown
               fillAvailable: window.isBottom
-              // Only stretch when the paired band is taller than the tile grid
-              // (e.g. apps+buttons win the max); otherwise natural size fills.
+              // Stretch only when the paired band is taller than the tiles.
               stretchTiles: window.isBottom && body.pairedH > naturalHeight
               width: parent.width
               height: window.isBottom ? parent.height : implicitHeight
@@ -692,8 +689,8 @@ PanelWindow {
   }
 
   HyprlandFocusGrab {
-    // Only grab after the pointer has entered — keybind open was clearing the
-    // grab immediately and dismissing the panel before it could be used.
+    // Grab only after the pointer enters: on keybind open the grab clears at
+    // once and would dismiss the panel.
     active: window.contentShown && window.grabReady && window.pointerEnteredWhileOpen
     windows: [window]
     onCleared: {

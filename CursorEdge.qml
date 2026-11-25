@@ -78,9 +78,8 @@ Item {
           }
           root.lastX = point.x
           root.lastY = point.y
-          // Skip Main/handleCursor while closed and far from the hot edge —
-          // otherwise every desktop mouse move pays QML binding + hit tests.
-          // Still emit on the near→far edge so dwell/hide timers can cancel.
+          // Closed + far: skip moved so desktop mouse moves do not pay for QML
+          // hit tests. Still emit once on near→far so dwell/hide can cancel.
           var near = root.adaptInterval(point.x, point.y)
           if (near || root.lastNear)
             root.moved(point.x, point.y)
