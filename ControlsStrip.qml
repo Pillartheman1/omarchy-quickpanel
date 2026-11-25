@@ -126,7 +126,7 @@ Item {
         if (hasInput) source.audio.muted = !source.audio.muted
         break
       case "night":
-        Quickshell.execDetached(["omarchy", "toggle", "nightlight"])
+        Quickshell.execDetached(["omarchy-toggle-nightlight"])
         flagRefresh.restart()
         Qt.callLater(root.refreshFlags)
         break
@@ -158,7 +158,7 @@ Item {
 
   Process {
     id: nightlightProc
-    command: ["omarchy", "toggle", "nightlight", "--status"]
+    command: ["omarchy-toggle-nightlight", "--status"]
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
