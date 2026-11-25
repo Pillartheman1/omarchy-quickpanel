@@ -89,11 +89,11 @@ i18n/en.json             Strings
 
 Not blockers; pick when asked to continue:
 
-- Add-apps on bottom: expand hug height so search is not squeezed into the short paired band.
-- Dead-ish CursorEdge history already cleaned; keep far/near tuning if dwell feels laggy.
+- ~~Add-apps on bottom: expand hug height so search is not squeezed into the short paired band.~~ **Done on PR #1** (`fix/add-apps-bottom-hug-height`, commit `35cffe2`): `AppGrid.compactBodyHeight` (pin rows, or search + 4 result rows while adding) feeds `bottomPairedNaturalH` / `appsStackNaturalH`. Merge when verified on-device.
 - Comment trim: shorten changelog-style notes in WidgetGrid / QuickpanelWindow to short WHY constraints.
-- README still says long-press/swap in places — align copy with packed bottom reorder + side place/swap.
-- Manifest version: bump when shipping a tagged release.
+- README drag copy: confirm side place/swap vs bottom packed reorder wording stays accurate after merges.
+- Manifest / git tag: bump when shipping a named release beyond 0.2.0.
+- CursorEdge far/near tuning only if dwell feels laggy after the 220ms far interval.
 
 ---
 
@@ -110,4 +110,21 @@ Not blockers; pick when asked to continue:
 
 Copy into Neo when starting a session:
 
-> You are Neo on omarchy-quickpanel. Working tree: `~/Projects/omarchy-quickpanel` (plugin symlink `daniel.quickpanel`). Read `NEO.md`, then `AGENTS.md`, then `.grok/skills/quickpanel/SKILL.md`. Repo: https://github.com/Pillartheman1/omarchy-quickpanel. Current state: bottom hug layout, Column side widgets, bottom drag = moveWidget (fixed clone + no-op drop bugs), CursorEdge efficiency gating, AGENTS.md skill shipping notes. Continue from NEO.md §6 unless I name a task. Verify with `omarchy restart shell` and edge dwell + Edit drag before claiming done.
+```
+You are Neo on omarchy-quickpanel.
+
+Working tree: ~/Projects/omarchy-quickpanel
+Plugin symlink: ~/.config/omarchy/plugins/daniel.quickpanel → that tree
+Config: ~/.config/omarchy/extensions/daniel.quickpanel.json
+Repo: https://github.com/Pillartheman1/omarchy-quickpanel
+
+Read in order: NEO.md → AGENTS.md → .grok/skills/quickpanel/SKILL.md → code you touch.
+
+Git state to respect:
+- master @ aabfa81 — Release 0.2.0 (controls, widgets, multi-edge, drag fixes, CursorEdge gating, AGENTS.md, this handoff)
+- Open PR #1 — fix/add-apps-bottom-hug-height @ 35cffe2 (grow bottom hug while Add apps is open). Verify on-device, then merge; do not reinvent that fix on master.
+
+Hard rules (summary): bottom Edit drag = moveWidget by visual index (never placeWidget on packed Row); after splice pack in array order (never packWidgetSlots — re-sorts stale slots); no undefined anchors; no closed accent edge strip; clear ~/.cache/quickshell/qmlcache if UI looks stale; widgets gate with active/visibleContent.
+
+When I say “continue” without a task: finish/verify/merge PR #1 if still open, then next open item in NEO.md §6. Verify with omarchy restart shell, dwell + Super+Shift+Z on each edge, bottom Edit drag (order sticks, no clones), side place/swap, Add apps on bottom (panel grows for search), closed panel has no leftover strip.
+```
