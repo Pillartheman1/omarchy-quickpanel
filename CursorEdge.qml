@@ -2,14 +2,24 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Poll Hyprland cursor position. Flea's shelf rail owns the middle 60% of the
-// right edge on the Overlay layer, so a HoverHandler alone cannot see the full
-// ridge; compositor IPC still can.
+// Poll Hyprland cursor position for the active quickpanel edge (right/left/bottom).
 Item {
   id: root
 
   property bool active: false
-  property int intervalMs: 40
+  property string edgeMode: "right" // right | left | bottom
+  property real edgeCoord: 0
+  // Near: dwell / leave-to-close. Far: closed and away from the hot edge.
+  property int nearIntervalMs: 45
+  property int farIntervalMs: 220
+  property real proximityPx: 96
+  // True while the panel is open or editing — keep fast polls + moved emits.
+  property bool urgency: false
+
+  property real lastX: -1
+  property real lastY: -1
+  // Emit one more moved after leaving proximity so dwell/hide can cancel.
+  property bool lastNear: false
 
   readonly property string socketPath: Quickshell.env("XDG_RUNTIME_DIR") + "/hypr/"
     + Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") + "/.socket.sock"
@@ -25,8 +35,26 @@ Item {
     socket.flush()
   }
 
+  function nearEdge(x, y) {
+    if (!isFinite(root.edgeCoord)) return false
+    if (root.edgeMode === "left")
+      return x <= root.edgeCoord + root.proximityPx && x >= root.edgeCoord - 2
+    if (root.edgeMode === "bottom")
+      return y >= root.edgeCoord - root.proximityPx && y <= root.edgeCoord + 2
+    // right
+    return x >= root.edgeCoord - root.proximityPx && x <= root.edgeCoord + 2
+  }
+
+  function adaptInterval(x, y) {
+    var near = root.urgency || root.nearEdge(x, y)
+    var next = near ? root.nearIntervalMs : root.farIntervalMs
+    if (poll.interval !== next) poll.interval = next
+    return near
+  }
+
   Timer {
-    interval: root.intervalMs
+    id: poll
+    interval: root.farIntervalMs
     running: root.active
     repeat: true
     onTriggered: root.requestPos()
@@ -43,14 +71,38 @@ Item {
         if (!root.active) return
         try {
           var point = JSON.parse(data + "}")
-          if (isFinite(point.x) && isFinite(point.y)) root.moved(point.x, point.y)
+          if (!isFinite(point.x) || !isFinite(point.y)) return
+          if (point.x === root.lastX && point.y === root.lastY) {
+            root.adaptInterval(point.x, point.y)
+            return
+          }
+          root.lastX = point.x
+          root.lastY = point.y
+          // Skip Main/handleCursor while closed and far from the hot edge —
+          // otherwise every desktop mouse move pays QML binding + hit tests.
+          // Still emit on the near→far edge so dwell/hide timers can cancel.
+          var near = root.adaptInterval(point.x, point.y)
+          if (near || root.lastNear)
+            root.moved(point.x, point.y)
+          root.lastNear = near
         } catch (e) {}
       }
     }
   }
 
   onActiveChanged: {
-    if (active) root.requestPos()
-    else if (socket.connected) socket.connected = false
+    if (active) {
+      root.lastNear = false
+      root.requestPos()
+    } else if (socket.connected) {
+      socket.connected = false
+    }
+  }
+
+  onUrgencyChanged: {
+    if (urgency) {
+      poll.interval = root.nearIntervalMs
+      root.lastNear = true
+    }
   }
 }

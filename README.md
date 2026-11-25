@@ -40,6 +40,36 @@ This is a `keepLoaded` overlay (not a bar widget). The hot edge stays mapped; pi
 
 Pins are stored in `~/.config/omarchy/extensions/daniel.quickpanel.json`.
 
-## v1 scope
+## Widgets
 
-Pinned apps and a themed scaffold. Status widgets, system toggles, and custom commands are left for later fills of the same panel.
+Above the apps: a **Controls** strip (Wi‑Fi, Bluetooth, Sound, Mic, Night light,
+Focus/DND). Pinned apps stay in a **2-row** band. Below a divider, a **scrollable
+one-column slot grid** fills the rest of the panel (`WidgetGrid.qml`). Long-press
+a widget and drop it: on **side edges**, empty cells place and occupied cells
+swap; on the **bottom strip**, cards reorder as a packed list. Add as many
+widgets as you like; the grid scrolls. Layout is stored next to pins in
+`~/.config/omarchy/extensions/daniel.quickpanel.json`:
+
+```json
+{
+  "pins": ["foot", "..."],
+  "widgets": [
+    { "id": "Weather", "span": 1, "slot": 0 },
+    { "id": "AnalogueClock", "span": 2, "slot": 2 }
+  ]
+}
+```
+
+Shipped widgets include **Weather**, **AnalogueClock**, **SpcxStock**, and
+**SystemGauges**. Build more with the agent skill:
+
+```
+/quickpanel
+```
+
+The skill ships **with the plugin** at `.grok/skills/quickpanel/SKILL.md` (also
+present after `omarchy plugin add` under
+`~/.config/omarchy/plugins/daniel.quickpanel/.grok/skills/quickpanel/`).
+
+Agents do not load it globally just because the overlay is enabled. For install
+options (Grok project session, user symlink, other agents), see **[AGENTS.md](AGENTS.md)**.
