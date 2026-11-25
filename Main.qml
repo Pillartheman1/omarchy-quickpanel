@@ -40,6 +40,7 @@ Item {
   // live under apps/ or pixmaps).
   property var iconIndex: ({})
   property var pendingIconIndex: ({})
+  property bool iconRescanQueued: false
 
   property alias strings: stringsCatalog
 
@@ -282,7 +283,12 @@ Item {
     // (DesktopEntries changed) or the index is still empty.
     if (!force && root.iconIndex && Object.keys(root.iconIndex).length > 0)
       return
-    if (!iconIndexScan.running) iconIndexScan.running = true
+    if (iconIndexScan.running) {
+      // Entries changed mid-scan: run once more when this scan finishes.
+      root.iconRescanQueued = true
+      return
+    }
+    iconIndexScan.running = true
   }
 
   function debugIcons() {
@@ -333,7 +339,8 @@ Item {
     var id = String(entry.id || desktopId || "")
     if (!id) return
     // Match AppLibrary: scope gtk-launch under the graphical app slice.
-    Util.execDetached("uwsm-app -- gtk-launch " + Util.shellQuote(id + ".desktop"))
+    // argv form: the desktop id never passes through a shell.
+    Quickshell.execDetached(["uwsm-app", "--", "gtk-launch", id + ".desktop"])
     root.close()
   }
 
@@ -430,7 +437,13 @@ Item {
     command: ["bash", "-c", root.iconIndexScanCommand()]
     stdout: SplitParser { onRead: function(line) { root.indexIconLine(line) } }
     onStarted: root.pendingIconIndex = ({})
-    onExited: root.iconIndex = root.pendingIconIndex
+    onExited: {
+      root.iconIndex = root.pendingIconIndex
+      if (root.iconRescanQueued) {
+        root.iconRescanQueued = false
+        Qt.callLater(function() { iconIndexScan.running = true })
+      }
+    }
   }
 
   Timer {
