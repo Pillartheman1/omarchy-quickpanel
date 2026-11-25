@@ -4,28 +4,32 @@
 
 Hot-edge quick panel for [Omarchy](https://omarchy.org). Dwell on the right, left, or bottom edge of the screen and a panel slides out with quick controls, pinned apps, and widgets. **Super+Shift+Z** toggles it from the keyboard (keybind below).
 
+**ID:** `daniel.quickpanel`
+
+Unofficial. Not affiliated with Omarchy. Plugins run unsandboxed inside `omarchy-shell`; only add this repo if you trust it.
+
 ## Install
 
 ```bash
 omarchy plugin add https://github.com/Pillartheman1/omarchy-quickpanel.git --enable
 ```
 
-Or for local development:
+Or for local development, from a clone:
 
 ```bash
-ln -sfn ~/Projects/omarchy-quickpanel ~/.config/omarchy/plugins/daniel.quickpanel
+ln -sfn "$(pwd)" ~/.config/omarchy/plugins/daniel.quickpanel
 omarchy plugin validate ~/.config/omarchy/plugins/daniel.quickpanel
 omarchy plugin enable daniel.quickpanel
 omarchy restart shell
 ```
 
-Add a keybind in `~/.config/hypr/bindings.lua`:
+`omarchy plugin add` does not install keybinds. Add one in `~/.config/hypr/bindings.lua`:
 
 ```lua
 o.bind("SUPER + SHIFT + Z", "Quickpanel", "omarchy-shell daniel.quickpanel toggle")
 ```
 
-Then `hyprctl reload` and check `hyprctl configerrors`.
+Then `hyprctl reload` and check `hyprctl configerrors`. After plugin updates, run `omarchy restart shell` so the overlay is not left on stale QML.
 
 This is a `keepLoaded` overlay (not a bar widget). The hot edge stays mapped; pinned apps are resolved with DesktopEntries and launched via `gtk-launch`.
 
@@ -91,3 +95,34 @@ present after `omarchy plugin add` under
 
 Agents do not load it globally just because the overlay is enabled. For install
 options (Grok project session, user symlink, other agents), see **[AGENTS.md](AGENTS.md)**.
+
+## Config, network, and dependencies
+
+The plugin writes one file: `~/.config/omarchy/extensions/daniel.quickpanel.json` (pins, widget layout, edge). Nothing is written until you change something, and nothing is saved during Edit mode until you press **Done**. If that file exists but is not valid JSON (say, mid-edit by hand), the panel keeps what it has, logs a warning, and does not save until the file parses again, so your pins are never overwritten.
+
+It reads, but never writes, Omarchy's weather location (`~/.local/state/omarchy/settings/weather.json`), `/proc/stat` and `/proc/meminfo` (System gauges), and the cursor position from Hyprland's local socket (edge dwell).
+
+Network use, only while the panel is open:
+
+- **Weather** (on by default): `api.open-meteo.com` with your Omarchy weather location's coordinates. With no location set, `geo.omarchy.org` is asked for an IP-based location, the same way Omarchy's own weather does it. At most once a minute, refreshed every 15 minutes.
+- **SPCX** (off by default; add it in the config): `quote.cnbc.com` (quote, every 60s) and `api.nasdaq.com` (chart, every 5 min). No account or API key.
+
+No telemetry and no API keys.
+
+Commands it runs, all shipped with Omarchy: `curl` (widgets above), `uwsm-app` + `gtk-launch` (launch pinned apps), `omarchy-bluetooth-power`, `omarchy-toggle-nightlight`, and `omarchy-shell notifications` (Controls strip toggles and status).
+
+## Develop
+
+```bash
+scripts/check.sh   # node tests + QML syntax check (qmllint if installed)
+```
+
+Tests need Node.js 20+ and cover the config parser, widget move/place/pack logic, the widget data parsers, and repo guards (single root manifest, no symlinks, only the plugin's own config is written, argv-only commands, plain-text rendering).
+
+## Remove
+
+```bash
+omarchy plugin remove daniel.quickpanel
+```
+
+Remove the Super+Shift+Z bind from `bindings.lua` if you added it. Your pins and layout stay in `~/.config/omarchy/extensions/daniel.quickpanel.json`; delete that file if you do not want them kept.

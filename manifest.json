@@ -6,10 +6,10 @@
   "author": "Daniel Klabunde",
   "license": "MIT",
   "homepage": "https://github.com/Pillartheman1/omarchy-quickpanel",
-  "description": "Right-edge hot strip that slides out a quick panel with pinned apps.",
+  "description": "Hot-edge quick panel on the right, left, or bottom screen edge with quick controls, pinned apps, and widgets.",
   "kinds": ["overlay"],
   "keepLoaded": true,
-  "keywords": ["quickpanel", "sidebar", "hot-edge", "apps", "panel"],
+  "keywords": ["quickpanel", "sidebar", "hot-edge", "apps", "panel", "widgets"],
   "entryPoints": {
     "overlay": "Main.qml"
   }

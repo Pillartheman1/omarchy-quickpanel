@@ -10,8 +10,7 @@ description: >
 
 # Quickpanel widgets
 
-Plugin tree: `~/Projects/omarchy-quickpanel`  
-Runtime symlink: `~/.config/omarchy/plugins/daniel.quickpanel`  
+Plugin tree: `~/.config/omarchy/plugins/daniel.quickpanel` (or a dev clone symlinked there)  
 Config: `~/.config/omarchy/extensions/daniel.quickpanel.json`  
 Open: **Super+Shift+Z** (user keybind) or edge dwell (~200ms) on the configured edge (right/bottom → rightmost output, left → leftmost).  
 Reload: shell often hot-reloads plugin saves; use `omarchy restart shell` if a `keepLoaded` overlay stays on an old tree.
@@ -67,7 +66,7 @@ Do not hardcode widgets in `QuickpanelWindow.qml`. Placement belongs to `WidgetG
 
 Empty slots are valid drop targets. In **edit mode** on side edges, drag → drop on empty **places**; drop on occupied **swaps**. On the bottom strip widgets are a packed list: drop on a card moves the dragged card to that position, drop on the trailing spare moves it last, and slots are repacked from 0. The grid **scrolls** when widgets exceed the viewport (`emptyTail` keeps spare drop slots).
 
-Legacy pins-only configs are seeded once with `defaultWidgets()` on load.
+New or pins-only configs show `defaultWidgets()` in memory; nothing is written until the user changes something. An unparseable config is never saved over (`configWritable` false until it parses).
 
 ## Dual layout (required)
 
@@ -116,7 +115,7 @@ Follow SpcxStock / SystemGauges (`height: parent.height` when available). Avoid 
 | Bluetooth | `omarchy-bluetooth-power on\|off` (rfkill; matches bar plugin) |
 | Sound | `Pipewire.defaultAudioSink.audio.muted` |
 | Mic | `Pipewire.defaultAudioSource.audio.muted` |
-| Night | `omarchy toggle nightlight` |
+| Night | `omarchy-toggle-nightlight` (status: `--status`) |
 | Focus | `omarchy-shell notifications toggleDnd` |
 
 Do not re-implement full network/bluetooth/audio panels here — those stay in the bar plugins.
