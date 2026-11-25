@@ -30,6 +30,18 @@ function effectiveLocation(configured, detected) {
   return isAutoLocation(configured) && detected ? detected : (configured || { name: "", latitude: null, longitude: null })
 }
 
+// Location id at ~1 km precision ("" when unset). A forecast is only
+// shown while its key matches the current location.
+function locationKey(loc) {
+  var l = loc || {}
+  if (l.latitude === null || l.latitude === undefined || l.latitude === "") return ""
+  if (l.longitude === null || l.longitude === undefined || l.longitude === "") return ""
+  var lat = parseFloat(String(l.latitude))
+  var lon = parseFloat(String(l.longitude))
+  if (isNaN(lat) || isNaN(lon)) return ""
+  return lat.toFixed(2) + "," + lon.toFixed(2)
+}
+
 function roundedTemp(value) {
   if (value === undefined || value === null || value === "") return ""
   var n = parseFloat(String(value))
