@@ -92,8 +92,29 @@ Not blockers; pick when asked to continue:
 - ~~Add-apps on bottom: expand hug height so search is not squeezed into the short paired band.~~ Done (PR #1, merged): `AppGrid.compactBodyHeight` (pin rows, or search + 4 result rows while adding) feeds `bottomPairedNaturalH` / `appsStackNaturalH`. Verified on-device by Daniel.
 - ~~Comment trim: shorten changelog-style notes in WidgetGrid / QuickpanelWindow to short WHY constraints.~~ Done (`chore/comment-trim`): comments only, hard-rule warnings kept.
 - ~~README drag copy: confirm side place/swap vs bottom packed reorder wording stays accurate after merges.~~ Done (`docs/readme-drag-wording`): README, widgets/README, and the skill now match the code (no long-press; side place/swap; bottom moveWidget reorder).
-- Manifest / git tag: bump when shipping a named release beyond 0.2.0.
+- ~~Manifest / git tag: bump when shipping a named release beyond 0.2.0.~~ Manifest bumped to 1.0.0 on `release/marketplace` (first marketplace listing). Tag `v1.0.0` only after Daniel merges that PR.
 - CursorEdge far/near tuning only if dwell feels laggy after the 220ms far interval.
+
+## 6a. Marketplace release (1.0.0)
+
+Submission target: `omacom/omarchy-plugin-marketplace` issue titled `[Plugin]: Quickpanel` (template headings in `SUBMISSION.md` there). Reviewer HANCORE-linux reviews exact commits; Daniel's Context Deployment (#15504) is the reference.
+
+What the release branch fixed or added:
+
+- Removed the `.grok/skills/quickpanel-widget` symlink (validator rejects any symlink).
+- Config safety: an unparseable or unreadable config is never saved over (`configWritable`); defaults are in-memory until the user changes something; cancelling Edit discards and reloads instead of writing.
+- App launch uses argv (`Quickshell.execDetached([...])`), never a shell string.
+- Weather results are bound to a location key; a forecast for a previous location is discarded.
+- Nightlight status calls `omarchy-toggle-nightlight --status` directly.
+- `tests/` (node:test) + `scripts/check.sh`. Run `scripts/check.sh` before every push.
+
+Rules for future changes (reviewer focus):
+
+- Write only `~/.config/omarchy/extensions/daniel.quickpanel.json`. Never save over a file you could not parse.
+- Commands as argv arrays only. Network only while `active`; document any new endpoint in README.
+- Async results (Process/curl) must check they still match the current request (location, symbol) before applying.
+- Edit-mode Undo/Cancel touch only the plugin's own in-memory state; nothing is written until Done.
+- Still needed from Daniel: root `preview.png` screenshot (optional for the marketplace, but listings show it).
 
 ---
 
