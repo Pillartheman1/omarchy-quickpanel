@@ -32,12 +32,15 @@ Item {
   property bool editing: false
   property var editSnapshot: null
   property string draftEdge: "right"
+  // False while the config file exists but cannot be read or parsed.
+  property bool configWritable: true
 
   // Same fallback index AppLibrary builds: Qt's themed iconPath often misses
   // app icons in a long-lived shell (cache never re-scans; some names only
   // live under apps/ or pixmaps).
   property var iconIndex: ({})
   property var pendingIconIndex: ({})
+  property bool iconRescanQueued: false
 
   property alias strings: stringsCatalog
 
@@ -49,27 +52,30 @@ Item {
   function loadConfig(raw) {
     // Ignore disk reloads while editing so Undo/Done own the working copy.
     if (root.editing) return
-    var parsed = Model.parseConfig(raw)
+    var parsed = Model.parseConfigResult(raw)
+    if (!parsed.ok) {
+      // Unreadable (hand edit in progress, partial write): keep the current
+      // state and stop saving until the file parses again, so the user's
+      // pins are never replaced. The file watcher reloads once it is fixed.
+      root.configWritable = false
+      console.warn("daniel.quickpanel: " + root.configPath
+        + " is not valid JSON; not saving until it is fixed")
+      return
+    }
+    root.configWritable = true
     root.pins = parsed.pins
     root.edge = parsed.edge
     root.draftEdge = parsed.edge
-    var hadWidgetsKey = false
-    try {
-      var data = JSON.parse(String(raw || "{}"))
-      hadWidgetsKey = !!(data && Object.prototype.hasOwnProperty.call(data, "widgets"))
-    } catch (e) {
-      hadWidgetsKey = false
-    }
-    // Legacy pins-only config: seed Weather + AnalogueClock and persist once.
-    if (!hadWidgetsKey) {
-      root.widgets = Model.defaultWidgets()
-      Qt.callLater(function() { root.saveConfig() })
-    } else {
-      root.widgets = parsed.widgets
-    }
+    // New or pins-only config: show the default widgets in memory only.
+    // Nothing is written until the user changes something.
+    root.widgets = parsed.hasWidgets ? parsed.widgets : Model.defaultWidgets()
   }
 
   function saveConfig() {
+    if (!root.configWritable) {
+      console.warn("daniel.quickpanel: not saving; " + root.configPath + " is unreadable")
+      return
+    }
     configFile.setText(Model.serializeConfig(root.pins, root.widgets, root.edge))
   }
 
@@ -156,7 +162,9 @@ Item {
     root.edge = Model.normalizeEdge(root.draftEdge)
     root.editing = false
     root.editSnapshot = null
-    root.saveConfig()
+    // Nothing is written during an edit, so cancel only discards it. Reload
+    // so a change made to the file while editing is picked up, not replaced.
+    configFile.reload()
   }
 
   function setDraftEdge(next) {
@@ -275,7 +283,12 @@ Item {
     // (DesktopEntries changed) or the index is still empty.
     if (!force && root.iconIndex && Object.keys(root.iconIndex).length > 0)
       return
-    if (!iconIndexScan.running) iconIndexScan.running = true
+    if (iconIndexScan.running) {
+      // Entries changed mid-scan: run once more when this scan finishes.
+      root.iconRescanQueued = true
+      return
+    }
+    iconIndexScan.running = true
   }
 
   function debugIcons() {
@@ -326,7 +339,8 @@ Item {
     var id = String(entry.id || desktopId || "")
     if (!id) return
     // Match AppLibrary: scope gtk-launch under the graphical app slice.
-    Util.execDetached("uwsm-app -- gtk-launch " + Util.shellQuote(id + ".desktop"))
+    // argv form: the desktop id never passes through a shell.
+    Quickshell.execDetached(["uwsm-app", "--", "gtk-launch", id + ".desktop"])
     root.close()
   }
 
@@ -423,7 +437,13 @@ Item {
     command: ["bash", "-c", root.iconIndexScanCommand()]
     stdout: SplitParser { onRead: function(line) { root.indexIconLine(line) } }
     onStarted: root.pendingIconIndex = ({})
-    onExited: root.iconIndex = root.pendingIconIndex
+    onExited: {
+      root.iconIndex = root.pendingIconIndex
+      if (root.iconRescanQueued) {
+        root.iconRescanQueued = false
+        Qt.callLater(function() { iconIndexScan.running = true })
+      }
+    }
   }
 
   Timer {
@@ -444,7 +464,17 @@ Item {
     atomicWrites: true
     printErrors: false
     onLoaded: root.loadConfig(text())
-    onLoadFailed: root.loadConfig("{}")
+    onLoadFailed: function(error) {
+      // Missing file = fresh install. Any other failure (permissions, not a
+      // file) must not lead to a save that replaces it.
+      if (error === FileViewError.FileNotFound) {
+        root.loadConfig("{}")
+      } else {
+        root.configWritable = false
+        console.warn("daniel.quickpanel: cannot read " + root.configPath
+          + " (FileViewError " + error + "); not saving")
+      }
+    }
     onFileChanged: reload()
   }
 

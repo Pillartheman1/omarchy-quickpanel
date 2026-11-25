@@ -22,9 +22,13 @@ Item {
   property string status: "idle" // idle | loading | ready | error
   property string errorText: ""
   property int retryBudget: 0
+  // Location the shown forecast / the running request belong to.
+  property string forecastKey: ""
+  property string inflightKey: ""
 
   readonly property var location: Model.effectiveLocation(configuredLocation, detectedLocation)
   readonly property bool autoLocation: Model.isAutoLocation(configuredLocation)
+  readonly property string locationKey: Model.locationKey(location)
   readonly property bool hasCoordinates: {
     var lat = parseFloat(String(location.latitude))
     var lon = parseFloat(String(location.longitude))
@@ -84,6 +88,16 @@ Item {
     if (active && hasCoordinates) fetchForecast(false)
   }
 
+  onLocationKeyChanged: {
+    // Never show another place's forecast under the new place name.
+    if (root.forecast && root.forecastKey !== root.locationKey) {
+      root.forecast = null
+      root.forecastKey = ""
+      if (root.locationKey) root.status = "loading"
+    }
+    if (active && hasCoordinates) fetchForecast(false)
+  }
+
   function refresh(force) {
     locationFile.reload()
     if (autoLocation) detectLocation()
@@ -103,10 +117,13 @@ Item {
   }
 
   function fetchForecast(force) {
-    if (!hasCoordinates) return
+    if (!active || !hasCoordinates) return
+    // A running request for an old location is dropped and re-run on finish.
     if (forecastProc.running) return
+    var key = root.locationKey
     var now = Date.now()
-    if (!force && root.forecast && (now - root.lastFetchAt) < root.minFetchMs)
+    if (!force && root.forecast && root.forecastKey === key
+        && (now - root.lastFetchAt) < root.minFetchMs)
       return
     var lat = parseFloat(String(location.latitude))
     var lon = parseFloat(String(location.longitude))
@@ -119,6 +136,7 @@ Item {
       + "&timezone=auto"
     if (status !== "ready") status = "loading"
     forecastProc.command = ["curl", "-fsS", "--max-time", "5", url]
+    root.inflightKey = key
     forecastProc.running = true
     root.lastFetchAt = now
   }
@@ -185,9 +203,17 @@ Item {
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
+        var key = root.inflightKey
+        root.inflightKey = ""
+        if (key !== root.locationKey) {
+          // Location changed while this ran: discard and fetch the new one.
+          Qt.callLater(function() { root.fetchForecast(true) })
+          return
+        }
         var parsed = Model.parseForecast(String(text || ""))
         if (parsed && parsed.current) {
           root.forecast = parsed
+          root.forecastKey = key
           root.status = "ready"
           root.errorText = ""
           root.retryBudget = 0

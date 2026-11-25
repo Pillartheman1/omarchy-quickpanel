@@ -15,6 +15,29 @@ function parseConfig(raw) {
   }
 }
 
+// Like parseConfig, but reports whether the text was a readable config
+// object. Callers must not save over a file that failed to parse (a hand
+// edit in progress or a partial write) or the user's pins would be lost.
+function parseConfigResult(raw) {
+  var text = String(raw || "")
+  if (text.trim() === "") text = "{}"
+  var data
+  try {
+    data = JSON.parse(text)
+  } catch (e) {
+    return { ok: false, hasWidgets: false, pins: [], widgets: [], edge: "right" }
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data))
+    return { ok: false, hasWidgets: false, pins: [], widgets: [], edge: "right" }
+  return {
+    ok: true,
+    hasWidgets: Object.prototype.hasOwnProperty.call(data, "widgets"),
+    pins: normalizePins(data.pins),
+    widgets: normalizeWidgets(data.widgets),
+    edge: normalizeEdge(data.edge)
+  }
+}
+
 function normalizeEdge(edge) {
   var e = String(edge || "right").trim().toLowerCase()
   if (e === "left" || e === "bottom" || e === "right") return e
