@@ -4,7 +4,7 @@ description: >
   Build and wire custom widgets for the Omarchy Quickpanel (daniel.quickpanel).
   Widgets must support both vertical (side edge) and horizontal (bottom strip)
   layouts and fill the cell height in bottom mode. Use when the user runs
-  /quickpanel or /quickpanel-widget, or asks to add a clock, weather strip,
+  /quickpanel, or asks to add a clock, weather strip,
   control, or any QML widget to the quickpanel.
 ---
 

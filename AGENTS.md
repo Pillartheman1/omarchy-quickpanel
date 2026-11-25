@@ -13,10 +13,9 @@ The full procedure lives in:
 .grok/skills/quickpanel/SKILL.md
 ```
 
-Alias: `.grok/skills/quickpanel-widget` → same skill.
-
-Invoke it as **`/quickpanel`** (or `/quickpanel-widget`) once your agent can
-see that skill. It covers dual layout (side + bottom), registration in
+Invoke it as **`/quickpanel`** once your agent can see that skill. (The old
+`quickpanel-widget` alias symlink was removed: the Omarchy plugin marketplace
+rejects symlinks in plugin repos.) It covers dual layout (side + bottom), registration in
 `Model.js` / `WidgetGrid.qml` / `i18n`, and performance rules (`active` gating).
 
 Shipped widget modules: `widgets/` (`Weather`, `AnalogueClock`, `SpcxStock`,
