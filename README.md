@@ -2,7 +2,7 @@
 
 [![Built for Omarchy: Plugin](https://raw.githubusercontent.com/tcballard/omarchy-badges/75975e5b5bf75e7ede3764bcd2950046f7abfe2c/badges/v1/omarchy-plugin.svg)](https://github.com/tcballard/omarchy-badges)
 
-Right-edge hot strip for [Omarchy](https://omarchy.org). Dwell on the right edge of the screen (below the top bar) and a panel slides out with pinned app icons. **Super+Shift+Z** toggles it from the keyboard.
+Hot-edge quick panel for [Omarchy](https://omarchy.org). Dwell on the right, left, or bottom edge of the screen and a panel slides out with quick controls, pinned apps, and widgets. **Super+Shift+Z** toggles it from the keyboard (keybind below).
 
 ## Install
 
@@ -31,12 +31,21 @@ This is a `keepLoaded` overlay (not a bar widget). The hot edge stays mapped; pi
 
 ## Use
 
-- Move the pointer to the **right edge**, below the top bar, and hold briefly (~200ms). The panel slides in.
+- Move the pointer to the panel's edge and hold briefly (~200ms). The panel slides in. Right is the default; **Edit → Placement** switches to left or bottom. Right and bottom use the rightmost monitor, left uses the leftmost. Side edges start below the top bar.
 - Leave the panel (or press Escape) to tuck it away again.
 - **Super+Shift+Z** opens or closes it.
 - Left-click an app to launch it.
 - Right-click a pinned app to unpin it.
-- Use **Add apps**, search, and click a result to pin it (right-click a search row to pin without leaving the picker).
+- Use **Add apps**, search, and click a result to pin it. Clicking a pinned result (marked ●) unpins it. The picker stays open until you press **Done**.
+
+### Edit mode
+
+Press **Edit** (top of the panel on side edges, under the apps on the bottom strip).
+
+- Drag apps or widgets to rearrange them. Dragging only works in Edit mode; there is no long-press, a drag starts once you move the pointer a few pixels.
+- **✕** on an app or widget removes it.
+- **Placement** (Left / Right / Bottom) picks the edge.
+- **Done** saves. **Undo** goes back to how things were when you pressed Edit. Escape or closing the panel cancels the edit and reverts it.
 
 Pins are stored in `~/.config/omarchy/extensions/daniel.quickpanel.json`.
 
@@ -44,10 +53,19 @@ Pins are stored in `~/.config/omarchy/extensions/daniel.quickpanel.json`.
 
 Above the apps: a **Controls** strip (Wi‑Fi, Bluetooth, Sound, Mic, Night light,
 Focus/DND). Pinned apps stay in a **2-row** band. Below a divider, a **scrollable
-one-column slot grid** fills the rest of the panel (`WidgetGrid.qml`). Long-press
-a widget and drop it: on **side edges**, empty cells place and occupied cells
-swap; on the **bottom strip**, cards reorder as a packed list. Add as many
-widgets as you like; the grid scrolls. Layout is stored next to pins in
+one-column slot grid** fills the rest of the panel (`WidgetGrid.qml`). On the
+bottom edge the layout is one strip instead: controls | apps | widgets, with the
+widgets in a horizontal row.
+
+Rearranging widgets in Edit mode:
+
+- **Side edges:** drop a widget on an empty slot to place it there, or on
+  another widget to swap the two.
+- **Bottom strip:** widgets are a packed list. Drop a card on another card's
+  position to move it there (the rest shift over), or on the empty slot at the
+  end to move it last.
+
+Add as many widgets as you like; the grid scrolls. Layout is stored next to pins in
 `~/.config/omarchy/extensions/daniel.quickpanel.json`:
 
 ```json
