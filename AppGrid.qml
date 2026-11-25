@@ -39,6 +39,16 @@ Item {
     ? 0
     : (root.compactPinRows * root.slotSize
       + Math.max(0, root.compactPinRows - 1) * Style.spacing.xs)
+  // Bottom Add apps: search box + a few result rows. The paired band only
+  // hugs the pin rows, which squeezes the search view (0–1 pin rows).
+  readonly property int compactAddRows: 4
+  readonly property int compactAddHeight: searchBox.height + addView.spacing
+    + root.compactAddRows * (Style.spacing.popupRowHeight + Style.spacing.sm)
+    + Math.max(0, root.compactAddRows - 1) * Style.spacing.hairline
+  // What the bottom paired column reserves above its buttons.
+  readonly property int compactBodyHeight: root.adding
+    ? Math.max(root.compactGridHeight, root.compactAddHeight)
+    : root.compactGridHeight
 
   implicitWidth: root.fillAvailable
     ? (root.compactColumns * root.slotSize
