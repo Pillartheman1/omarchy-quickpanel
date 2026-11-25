@@ -182,7 +182,7 @@ Item {
     }
   }
 
-  // Bottom strip: 2-column stack with labels (matches wireframe). Side: caption + 3-col.
+  // Bottom: 2-column stack with labels. Side: caption + 3-col.
   readonly property bool compact: root.fillAvailable
   readonly property int compactColumns: 2
   readonly property int compactRows: Math.ceil(root.tileIds.length / root.compactColumns)
@@ -289,7 +289,7 @@ Item {
           }
 
           Text {
-            // Labels on both layouts — wireframe shows them on bottom too.
+            // Labels on both layouts.
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width
             horizontalAlignment: Text.AlignHCenter

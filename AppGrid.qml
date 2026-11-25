@@ -31,16 +31,15 @@ Item {
 
   // Bottom strip: 4 columns, stacked vertically (scroll if needed).
   readonly property int compactColumns: 4
-  // Real content height — do not use Grid.rows=1000 (it blows implicitHeight
-  // and keeps the pin block top-aligned instead of centered).
+  // Real content height; Grid.rows=1000 inflates implicitHeight and breaks centering.
   readonly property int compactPinRows: Math.max(0,
     Math.ceil(root.pins.length / Math.max(1, root.compactColumns)))
   readonly property int compactGridHeight: root.pins.length === 0
     ? 0
     : (root.compactPinRows * root.slotSize
       + Math.max(0, root.compactPinRows - 1) * Style.spacing.xs)
-  // Bottom Add apps: search box + a few result rows. The paired band only
-  // hugs the pin rows, which squeezes the search view (0–1 pin rows).
+  // Bottom Add apps: search box + a few result rows, so search is not squeezed
+  // into the pin-row band.
   readonly property int compactAddRows: 4
   readonly property int compactAddHeight: searchBox.height + addView.spacing
     + root.compactAddRows * (Style.spacing.popupRowHeight + Style.spacing.sm)
@@ -141,7 +140,7 @@ Item {
           : Math.max(grid.implicitHeight, emptyState.implicitHeight + Style.spacing.xl)
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        // Bottom wireframe: 4-col stack scrolls vertically inside the strip.
+        // Bottom: 4-col stack scrolls vertically inside the strip.
         flickableDirection: Flickable.VerticalFlick
         visible: root.pins.length > 0
 

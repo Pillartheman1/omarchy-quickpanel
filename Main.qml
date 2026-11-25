@@ -121,7 +121,7 @@ Item {
     if (persist !== false) root.persistWorking()
   }
 
-  // Legacy packed reorder.
+  // List reorder (bottom packed strip); see Model.moveWidget.
   function moveWidget(fromIndex, toIndex, persist) {
     root.widgets = Model.moveWidget(root.widgets, fromIndex, toIndex)
     if (persist !== false) root.persistWorking()
